@@ -27,15 +27,37 @@ def chat():
         if not message:
             return jsonify({"error": "Empty message"}), 400
 
-        history.append({"role": "user", "content": message})
-        history = history[-20:]
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from groq import Groq
 
+app = Flask(__name__)
+CORS(app)
+
+GROQ_API_KEY = "ВСТАВЬ_СЮДА_НОВЫЙ_КЛЮЧ"
+client = Groq(api_key=GROQ_API_KEY)
+
+SYSTEM_PROMPT = "Ты ассистент NOVA. Отвечай кратко и понятно."
+
+@app.route("/")
+def home():
+    return "NOVA AI работает 🚀"
+
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.json
+    history = data.get("history", [])
+    message = data.get("message", "").strip()
+
+    if not message:
+        return jsonify({"error": "empty message"}), 400
+
+    history.append({"role": "user", "content": message})
+
+    try:
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                *history
-            ],
+            messages=[{"role": "system", "content": SYSTEM_PROMPT}, *history],
             max_tokens=1024,
             temperature=0.7,
         )
