@@ -31,3 +31,9 @@ def chat():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# 👇 ВОТ ЭТО ДОБАВЬ
+@app.route("/")
+def home():
+    return "NOVA AI работает 🚀"
