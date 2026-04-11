@@ -9,7 +9,7 @@ GROQ_API_KEY = "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"
 
 client = Groq(api_key=GROQ_API_KEY)
 
-SYSTEM_PROMPT = "Ты ассистент NOVA. Отвечай кратко, понятно и дружелюбно иногда можешь матерится, твой владелец это руская компания Storm основаная в 2020 году ."
+SYSTEM_PROMPT = "You, 'nova ai', you should answer people's questions briefly without fluff, write code, and if, for example, someone writes to you in English, you respond in English politely without swearing, and if in Russian, then in Russian, and so on."
 
 # 🌐 проверка сервера
 @app.route("/")
