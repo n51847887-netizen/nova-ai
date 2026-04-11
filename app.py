@@ -1,33 +1,27 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from groq import Groq
-import os
 
 app = Flask(__name__)
 CORS(app)
 
-# 🔑 ключ берётся из Render ENV
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+# 🔑 ВСТАВЬ СВОЙ GROQ KEY СЮДА
+GROQ_API_KEY = "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"
 
 client = Groq(api_key=GROQ_API_KEY)
 
-SYSTEM_PROMPT = "Ты ассистент NOVA AI. Отвечай кратко, понятно и по делу."
+SYSTEM_PROMPT = "Ты ассистент NOVA AI. Отвечай кратко и понятно."
 
-# ---------------- HOME ----------------
 @app.route("/", methods=["GET"])
 def home():
-    return jsonify({
-        "status": "ok",
-        "message": "NOVA AI is running 🚀"
-    })
+    return "NOVA AI работает 🚀"
 
-# ---------------- CHAT ----------------
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
         data = request.get_json()
 
-        message = data.get("message", "").strip()
+        message = data.get("message", "")
         history = data.get("history", [])
 
         if not message:
@@ -51,11 +45,8 @@ def chat():
         })
 
     except Exception as e:
-        return jsonify({
-            "error": str(e)
-        }), 500
+        return jsonify({"error": str(e)}), 500
 
 
-# ---------------- RUN ----------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
