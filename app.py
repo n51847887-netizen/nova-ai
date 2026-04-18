@@ -48,7 +48,7 @@ def chat():
         ]
 
         response = client.chat.completions.create(
-            model="llama3-70b-8192",
+            model="llama-3.1-70b-versatile",
             messages=messages,
             temperature=0.7,
             max_tokens=1024
