@@ -4,22 +4,21 @@ from groq import Groq
 
 app = Flask(__name__)
 
-# 🔥 FIX CORS (обязательно для браузера)
+# 🌐 CORS (для фронта)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-# 🔑 ТВОЙ КЛЮЧ (как ты просил — прямо в коде)
+# 🔑 API KEY
 GROQ_API_KEY = "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"
 
 client = Groq(api_key=GROQ_API_KEY)
 
 SYSTEM_PROMPT = """
-You, 'nova ai', you should answer people's questions briefly without fluff, write code, and if, for example, someone writes to you in English, you respond in English politely without swearing, and if in Russian, then in Russian, and so on.
+You are NOVA AI.
 
 Rules:
-- Answer clearly and briefly
-- Be helpful
+- Answer briefly and clearly
+- Reply in same language as user
 - Write code when needed
-- Reply in the same language as user
 - No unnecessary text
 """
 
@@ -27,13 +26,21 @@ Rules:
 def home():
     return "NOVA AI работает 🚀"
 
+# 💬 CHAT
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
-        data = request.get_json(force=True)
+        # 🔥 безопасное получение JSON
+        data = request.get_json(silent=True)
 
-        message = data.get("message", "").strip()
-        history = data.get("history", [])
+        if not data:
+            return jsonify({"error": "no json received"}), 400
+
+        message = (data.get("message") or "").strip()
+        history = data.get("history") or []
+
+        print("DEBUG MESSAGE:", message)
+        print("DEBUG HISTORY:", history)
 
         if not message:
             return jsonify({"error": "empty message"}), 400
@@ -43,12 +50,12 @@ def chat():
 
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
-            *history[-10:],  # защита от перегруза
+            *history[-10:],
             {"role": "user", "content": message}
         ]
 
         response = client.chat.completions.create(
-    model="llama-3.3-70b-versatile",  # или 8b
+            model="llama-3.3-70b-versatile",
             messages=messages,
             temperature=0.7,
             max_tokens=1024
@@ -59,7 +66,7 @@ def chat():
         })
 
     except Exception as e:
-        print("ERROR:", e)
+        print("ERROR:", str(e))
         return jsonify({"error": str(e)}), 500
 
 
