@@ -3,24 +3,34 @@ from flask_cors import CORS
 from groq import Groq
 
 app = Flask(__name__)
-CORS(app)
 
+# 🔥 FIX CORS (обязательно для браузера)
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+# 🔑 ТВОЙ КЛЮЧ (как ты просил — прямо в коде)
 GROQ_API_KEY = "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"
 
 client = Groq(api_key=GROQ_API_KEY)
 
-SYSTEM_PROMPT = "You, 'nova ai', you should answer people's questions briefly without fluff, write code, and if, for example, someone writes to you in English, you respond in English politely without swearing, and if in Russian, then in Russian, and so on."
+SYSTEM_PROMPT = """
+You are NOVA AI.
 
-# 🌐 проверка сервера
+Rules:
+- Answer clearly and briefly
+- Be helpful
+- Write code when needed
+- Reply in the same language as user
+- No unnecessary text
+"""
+
 @app.route("/")
 def home():
     return "NOVA AI работает 🚀"
 
-# 💬 чат
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
-        data = request.get_json()
+        data = request.get_json(force=True)
 
         message = data.get("message", "").strip()
         history = data.get("history", [])
@@ -28,18 +38,20 @@ def chat():
         if not message:
             return jsonify({"error": "empty message"}), 400
 
-        # добавляем сообщение пользователя
+        if not isinstance(history, list):
+            history = []
+
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
-            *history,
+            *history[-10:],  # защита от перегруза
             {"role": "user", "content": message}
         ]
 
         response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="llama3-70b-8192",
             messages=messages,
-            max_tokens=1024,
             temperature=0.7,
+            max_tokens=1024
         )
 
         return jsonify({
@@ -47,9 +59,9 @@ def chat():
         })
 
     except Exception as e:
+        print("ERROR:", e)
         return jsonify({"error": str(e)}), 500
 
 
-# 🚀 запуск (только локально, Render это игнорирует)
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
