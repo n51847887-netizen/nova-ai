@@ -8,12 +8,12 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # 🔑 ТВОЙ КЛЮЧ (как ты просил — прямо в коде)
-GROQ_API_KEY = "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"
+GROQ_API_KEY = "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"
 
 client = Groq(api_key=GROQ_API_KEY)
 
 SYSTEM_PROMPT = """
-You are NOVA AI.
+You, 'nova ai', you should answer people's questions briefly without fluff, write code, and if, for example, someone writes to you in English, you respond in English politely without swearing, and if in Russian, then in Russian, and so on.
 
 Rules:
 - Answer clearly and briefly
