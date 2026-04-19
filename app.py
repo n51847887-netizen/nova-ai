@@ -7,7 +7,7 @@ app = Flask(__name__)
 CORS(app)
 
 # 🔑 API
-GROQ_API_KEY = "gsk_скрыл"
+GROQ_API_KEY = "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"
 client = Groq(api_key=GROQ_API_KEY)
 
 # =========================
