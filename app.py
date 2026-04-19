@@ -115,12 +115,12 @@ def chat():
         ]
 
         # 🤖 AI REQUEST
-        response = client.chat.completions.create(
-            model="llama3-70b-8192",
-            messages=messages,
-            temperature=0.6,
-            max_tokens=900
-        )
+response = client.chat.completions.create(
+    model="llama-3.3-70b-versatile",
+    messages=messages,
+    temperature=0.6,
+    max_tokens=800
+)
 
         reply = response.choices[0].message.content
 
