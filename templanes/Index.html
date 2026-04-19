@@ -1435,7 +1435,6 @@
 
 <script>
 // ==================== CONFIGURATION ====================
-const SERVER = "https://nova-ai-6-jc9n.onrender.com";
 const MAX_PHOTOS_PER_DAY = 10;
 const MAX_MESSAGE_LENGTH = 4000;
 const TYPING_SPEED = 50; // ms per character simulation
@@ -2201,21 +2200,13 @@ async function sendAIRequest(text, image) {
     await sleep(800);
     updateTypingMessage('Генерирует ответ...');
 
-    const res = await fetch(`${SERVER}/chat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: text,
-        history: chat.messages.slice(-20).map(m => ({
-          role: m.role,
-          content: m.content || ""
-        })),
-        has_image: !!image
-      })
-    });
-
+    await fetch("/chat", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    message: text
+  })
+});
     console.log('Response status:', res.status);
 
     if (!res.ok) {
