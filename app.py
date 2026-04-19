@@ -1,44 +1,94 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from groq import Groq
 import time
 import traceback
 
-app = Flask(__name__, static_folder="static", template_folder="templates")
+app = Flask(__name__)
+CORS(app)
 
-# 🌐 CORS (можно оставить, но теперь почти не нужен)
-CORS(app, resources={r"/*": {"origins": "*"}})
-
-# 🔑 API KEY
+# =========================
+# 🔑 CONFIG
+# =========================
 GROQ_API_KEY = "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"
-
-if not GROQ_API_KEY or not GROQ_API_KEY.startswith("gsk_"):
-    raise ValueError("❌ Invalid Groq API key")
 
 client = Groq(api_key=GROQ_API_KEY)
 
-# 🧠 SYSTEM PROMPT (оставил твой, он норм)
+# =========================
+# 🧠 ADVANCED SYSTEM PROMPT (расширенный AI-режим)
+# =========================
 SYSTEM_PROMPT = """
-You are NOVA AI — a next-generation intelligent assistant.
+You are NOVA AI — a next-generation artificial intelligence system.
 
-RULES:
-- Reply in same language as user
-- Be clear, structured, useful
-- No unnecessary text
-- Write code when needed
-- Think step by step for complex questions
+────────────────────────────
+CORE IDENTITY
+────────────────────────────
+- You are NOVA AI, a highly advanced assistant similar to ChatGPT or Claude
+- You operate inside a web-based AI application
+- You are designed to be helpful, fast, precise, and intelligent
+
+────────────────────────────
+BEHAVIOR RULES
+────────────────────────────
+1. Always respond in the same language as the user
+2. Be concise but informative (no unnecessary fluff)
+3. If user asks for code → provide clean, production-ready code
+4. If question is complex → break it into steps
+5. Never hallucinate facts — if unsure, say so
+6. Never break character as NOVA AI
+7. Prioritize correctness over speed
+8. Keep responses structured and readable
+
+────────────────────────────
+CODING MODE
+────────────────────────────
+- Always format code in proper blocks
+- Prefer modern best practices
+- Avoid outdated syntax
+- Explain only if user requests explanation
+
+────────────────────────────
+THINKING MODE
+────────────────────────────
+When reasoning:
+- break problem into steps
+- analyze before answering
+- avoid guessing
+
+────────────────────────────
+SAFETY
+────────────────────────────
+- Do not provide harmful instructions
+- Do not generate unsafe content
+- Redirect unclear harmful requests safely
+
+────────────────────────────
+OUTPUT STYLE
+────────────────────────────
+- clean formatting
+- short paragraphs
+- bullet points when useful
+- structured answers
 """
 
-# 🏠 FRONTEND (HTML САЙТ ОТДАЁТСЯ ТУТ)
+# =========================
+# 🏠 HEALTH CHECK
+# =========================
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return jsonify({
+        "status": "online",
+        "name": "NOVA AI",
+        "version": "3.0",
+        "engine": "groq"
+    })
 
-
-# 💬 CHAT API
+# =========================
+# 🧠 CHAT ENGINE
+# =========================
 @app.route("/chat", methods=["POST"])
 def chat():
-    start_time = time.time()
+    start = time.time()
 
     try:
         data = request.get_json(silent=True)
@@ -49,15 +99,14 @@ def chat():
         message = (data.get("message") or "").strip()
         history = data.get("history") or []
 
-        # ❌ empty check
         if not message:
             return jsonify({"error": "empty message"}), 400
 
         if not isinstance(history, list):
             history = []
 
-        # 🧠 ограничение памяти
-        history = history[-10:]
+        # 🔒 limit memory
+        history = history[-12:]
 
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -67,18 +116,19 @@ def chat():
 
         # 🤖 AI REQUEST
         response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="llama3-70b-8192",
             messages=messages,
-            temperature=0.7,
+            temperature=0.6,
             max_tokens=900
         )
 
         reply = response.choices[0].message.content
 
-        print("⏱️ RESPONSE TIME:", round(time.time() - start_time, 2), "sec")
+        print(f"⚡ Response time: {round(time.time() - start, 2)}s")
 
         return jsonify({
-            "reply": reply
+            "reply": reply,
+            "status": "success"
         })
 
     except Exception as e:
@@ -86,11 +136,17 @@ def chat():
         print(traceback.format_exc())
 
         return jsonify({
-            "error": "server error",
+            "error": "internal server error",
             "details": str(e)
         }), 500
 
 
-# 🚀 START SERVER
+# =========================
+# 🚀 RUN
+# =========================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=False
+    )
