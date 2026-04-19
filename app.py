@@ -88,55 +88,32 @@ def home():
 # =========================
 @app.route("/chat", methods=["POST"])
 def chat():
-    start = time.time()
-
     try:
-        data = request.get_json(silent=True)
-
-        if not data:
-            return jsonify({"error": "no json received"}), 400
+        data = request.get_json(silent=True) or {}
 
         message = (data.get("message") or "").strip()
-        history = data.get("history") or []
 
         if not message:
             return jsonify({"error": "empty message"}), 400
 
-        if not isinstance(history, list):
-            history = []
-
-        # 🔒 limit memory
-        history = history[-12:]
-
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            *history,
-            {"role": "user", "content": message}
-        ]
-
-        # 🤖 AI REQUEST
-response = client.chat.completions.create(
-    model="llama-3.3-70b-versatile",
-    messages=messages,
-    temperature=0.6,
-    max_tokens=800
-)
-
-        reply = response.choices[0].message.content
-
-        print(f"⚡ Response time: {round(time.time() - start, 2)}s")
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": message}
+            ],
+            temperature=0.7,
+            max_tokens=800
+        )
 
         return jsonify({
-            "reply": reply,
-            "status": "success"
+            "reply": response.choices[0].message.content
         })
 
     except Exception as e:
-        print("❌ ERROR:")
-        print(traceback.format_exc())
-
+        print("❌ ERROR:", str(e))
         return jsonify({
-            "error": "internal server error",
+            "error": "server error",
             "details": str(e)
         }), 500
 
