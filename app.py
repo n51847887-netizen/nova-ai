@@ -938,21 +938,20 @@ All information in the world
 829. Consistency improves experience.
 830. Feedback loops improve systems.
 """
+# =========================
+# 🧠 MEMORY (LIGHTWEIGHT)
+# =========================
+from collections import defaultdict, deque
+
+memory = defaultdict(lambda: deque(maxlen=12))
 
 # =========================
-# 🧠 SIMPLE MEMORY STORE
+# 🧠 PRECOMPUTED SYSTEM CACHE
 # =========================
-memory = {}
+SYSTEM_CACHE = SYSTEM_PROMPT  # load ONCE, not per request
 
 # =========================
-# 🏠 HEALTH
-# =========================
-@app.route("/")
-def home():
-    return jsonify({"status": "OK", "ai": "NOVA AI", "version": "4.0"})
-
-# =========================
-# 🚀 CHAT ENGINE (UPGRADED)
+# 🚀 CHAT ENGINE (FAST MODE)
 # =========================
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -965,28 +964,27 @@ def chat():
         if not message:
             return jsonify({"error": "empty message"}), 400
 
-        # 🧠 init memory
-        if session_id not in memory:
-            memory[session_id] = []
+        history = list(memory[session_id])
 
-        history = memory[session_id][-12:]  # last messages only
+        # ⚡ ONLY KEEP LAST FEW MESSAGES (short context)
+        trimmed_history = history[-6:]
 
         messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            *history,
+            {"role": "system", "content": SYSTEM_CACHE},
+            *trimmed_history,
             {"role": "user", "content": message}
         ]
 
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=messages,
-            temperature=0.5,   # 👈 меньше хаоса = умнее ответы
-            max_tokens=900
+            temperature=0.4,
+            max_tokens=500,   # ⚡ reduced for speed
+            stream=False      # ⚡ ensure no streaming overhead
         )
 
         reply = response.choices[0].message.content
 
-        # 🧠 save memory
         memory[session_id].append({"role": "user", "content": message})
         memory[session_id].append({"role": "assistant", "content": reply})
 
@@ -1000,10 +998,3 @@ def chat():
             "error": "server error",
             "details": str(e)
         }), 500
-
-
-# =========================
-# 🚀 RUN
-# =========================
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
